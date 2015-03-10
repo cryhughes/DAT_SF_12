@@ -1,0 +1,93 @@
+Hey Ryan,
+
+Here's a few notes.
+
+#########################################
+1. Great work on the exploration and visualization of the data. I like the very simple histograms colored by survival. This very clearly lays out the relationships between some of the vairables like pclass, sex etc. 
+
+#########################################
+2. Great work mapping the Embarked towns to names of places. This is easier to use the data. Also, good job connecting that to the passenger class. They are highly correlated!
+
+#########################################
+3. The age imputation is really hard and I like that you approached it first by exploring the differences by class etc. Its not the easiet thing to do, because someitmes you still get odd values (4 year old married man, like you said). But in the end its better than nothing! 
+
+#########################################
+4. With the get dummies, I'm glad you found the method to drop 1 of the dummies. Some models like logistic regression might drop the unecessary variable automatically, but others might not, so its better practice to remove them yourself. 
+
+#########################################
+5. Pivot tables.. Saw this:
+
+#QUESTION: my pivot table function (to get mean age=f( sex, class) does not work, why?
+
+You had:
+```
+df_train.groupby(['Pclass','Sex'])['Age'].agg('mean')
+#this works, but it isn't pretty, and hard to access the values
+```
+
+You could try:
+```
+pd.DataFrame(df_train.groupby(['Pclass','Sex'])['Age'].agg('mean'))
+```
+
+or 
+
+```
+df_train.groupby(['Pclass','Sex'])['Age'].agg('mean').values
+```
+
+#########################################
+6. When you got to the logit model. I noticed you were using both the "statsmodels" and sklearn modules. Did you intend to use both? Do you understand the difference? StatsmodelsFormulas (smf) is really useful for printing out pretty tables with r-squared values etc, but isn't quite as easy to integrate into other stuff sklearn has built (like PCA, crossvalidation, scoring etc). When possible, I tend to stick to the sklearn models just because its easier to move around amongst models. 
+
+
+#########################################
+7. I tried a gradient boosting classifier and a random forest model as well. 
+
+#lets try a random forrest and a gradient on basically all the vairables!
+cols = ['Age', 'SibSp',
+       'Parch', 'Fare', 'Embarked', 'A', 'B', 'C', 'D', 'E',
+       'F', 'female', 'C1', 'C2']
+
+
+X = df_train[cols]
+Y = df_train['Survived']
+
+X_train, X_test, y_train, y_test = train_test_split( 
+    x_model_data, y_data, 
+    test_size=0.2, random_state=1000)
+
+
+from sklearn.ensemble import GradientBoostingClassifier
+# fit estimator to training set
+est = GradientBoostingClassifier(n_estimators=450, max_depth=1, learning_rate = 0.5, min_samples_leaf = 3)
+est.fit(X_train, y_train)
+#score on test
+est.score(X_test, y_test)
+
+
+#let's see if the random forrest does better!
+from sklearn.ensemble import RandomForestClassifier
+#fit estimator to training set
+est2 = RandomForestClassifier(n_estimators=10, max_depth=7)
+est2.fit(X_train, y_train)
+#score on test
+est2.score(X_test, y_test)
+
+
+
+#########################################
+8. Lastly, maybe try getting even better parameters with a grid search? 
+
+#maybe try a grid sear for better parameters?
+from sklearn.grid_search import GridSearchCV
+from sklearn.ensemble import GradientBoostingClassifier
+param_grid = {'learning_rate': [0.5, 0.1, 0.01],
+              'max_depth': [1,3],
+              'min_samples_leaf': [1,3],  
+              'max_features': [1.0] 
+              }
+
+est = GradientBoostingClassifier(n_estimators=450)
+
+# this may take some minutes
+gs_cv = GridSearchCV(est, param_grid, n_jobs=2).fit(X_train, y_train)
